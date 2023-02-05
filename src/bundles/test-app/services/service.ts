@@ -1,7 +1,11 @@
 import { createService } from '../../../common/async-operations';
 
 const api = {
-    getValue: () => Promise.resolve({valueType: 'value'})
+    getValue: () => new Promise((resolve) => {
+        setTimeout(() => {
+            resolve('value');
+        }, 5000)
+    })
 };
 
 class Service {

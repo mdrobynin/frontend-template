@@ -1,23 +1,14 @@
-import { Store } from '@reduxjs/toolkit';
-import { STORE_CACHE } from './internal/storeCache';
+import { StoreEnhancer, Reducer,  compose } from '@reduxjs/toolkit';
+import { INTERNAL_REF } from './internal/internalRef';
 
-export function asyncOperationsEnchancer(config: {store: Store}) {
-    if (!config.store || typeof config.store !== 'object') {
-        throw new Error('Redux store must be passed to initReduxAsyncAction');
-    }
+export const asyncOperationsEnchancer: StoreEnhancer = (next) => (reducer, preloadedState) => {
+    const store = next(reducer, preloadedState);
     
-    STORE_CACHE.store = config.store;
+    INTERNAL_REF.store = store;
+    INTERNAL_REF.updateReducer = (asyncOperationsReducer: Reducer) => {
+        const nextReducers = compose(reducer, asyncOperationsReducer) as unknown as Reducer;
+        store.replaceReducer(nextReducers);  
+    };
+    
+    return store;
 };
-
-export type StoreEnhancer<Ext = {}, StateExt = {}> = (
-    next: StoreEnhancerStoreCreator
-  ) => StoreEnhancerStoreCreator<Ext, StateExt>
-  export type StoreEnhancerStoreCreator<Ext = {}, StateExt = {}> = <
-    S = any,
-    A extends Action = AnyAction
-  >(
-    reducer: Reducer<S, A>,
-    preloadedState?: PreloadedState<S>
-  ) => Store<S & StateExt, A> & Ext
-  
-const enchancer = (next: any) => (reducer: Reducer, initialState, enhance) => 
