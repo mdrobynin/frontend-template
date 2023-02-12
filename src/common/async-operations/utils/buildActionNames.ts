@@ -1,51 +1,48 @@
-import { BuiltAsyncOperationActionNames } from '../types';
-import { buildOperationId } from './operationId';
+import { AsyncOperationActionNames } from '../types';
 
-function createActionBaseName(serviceName: string, fieldName: string) {
-    const prefix = serviceName.toUpperCase();
-    
-    if (fieldName.length < 2) {
-        return `${prefix}_${fieldName.toUpperCase()}`;
+function buildUppercaseUnderscoreSeparatedName(name: string) {
+    if (name.length === 1) {
+        return name.toUpperCase();
     }
 
     const parts: string[] = [];
-    let temp = fieldName[0];
+    let temp = name[0];
     
-    for (let index = 1; index < fieldName.length; index++) {
-        const charCode = fieldName.charCodeAt(index);
+    for (let index = 1; index < name.length; index++) {
+        const charCode = name.charCodeAt(index);
         
         if (charCode < 65 || charCode > 90) {
-            temp += fieldName[index];
+            temp += name[index];
         } else {
             parts.push(temp);
-            temp = fieldName[index];
+            temp = name[index];
         }
         
-        if (index === fieldName.length - 1) {
+        if (index === name.length - 1) {
             parts.push(temp);
         }
     }
     
-    const builtName = parts.map(part => part.toUpperCase()).join('_');
-    
-    return `${prefix}_${builtName}`;
+    return parts.map(part => part.toUpperCase()).join('_');
 }
 
+function createActionBaseName(serviceName: string, fieldName: string) {
+    const prefix = buildUppercaseUnderscoreSeparatedName(serviceName);
+    const name = buildUppercaseUnderscoreSeparatedName(fieldName);
+    
+    return `${prefix}_${name}`;
+}
 
 export function buildActionNames(
     serviceName: string,
     propertyName: string,
-): BuiltAsyncOperationActionNames {
-    const operationId = buildOperationId(serviceName, propertyName);
+): AsyncOperationActionNames {
     const baseName = createActionBaseName(serviceName, propertyName);
     
     return {
-        operationId,
-        actionNames: {
-            initialize: `${baseName}_INITIALIZE`,
-            executionStarted: `${baseName}_EXECUTION_STARTED`,
-            executionSucceeded: `${baseName}_EXECUTION_SUCCEEDED`,
-            executionFailed: `${baseName}_EXECUTION_FAILED`,
-        },
+        initialize: `${baseName}_INITIALIZE`,
+        executionStarted: `${baseName}_EXECUTION_STARTED`,
+        executionSucceeded: `${baseName}_EXECUTION_SUCCEEDED`,
+        executionFailed: `${baseName}_EXECUTION_FAILED`,
     };
 }

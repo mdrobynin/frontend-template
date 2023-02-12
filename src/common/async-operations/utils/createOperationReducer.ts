@@ -3,89 +3,95 @@ import { Reducer } from "@reduxjs/toolkit";
 import {
     OperationId,
     AsyncOperation,
-    AsyncOperations,
+    AppState,
     AsyncOperationAction,
     AsyncOperationActionNames,
     AsyncOperationExecutionStartedAction,
     AsyncOperationExecutionFailedAction,
     AsyncOperationExecutionSuccededAction,
 } from '../types';
+import { ASYNC_OPERATIONS_STATE_FIELD } from '../internal';
+import { buildDefaultOperation } from './buildDefaultOperation';
 
-function getDefaultOperation<TRes = unknown, TArgs = unknown[], TErr = Error>(operationId: OperationId<TRes, TArgs, TErr>) {
-    return {
-        id: operationId,
-        isLoading: false,
-        isError: false,
-        error: undefined,
-        args: undefined,
-        result: undefined,
-    } as AsyncOperation<TRes, TArgs, TErr>;
-}
-
-export function createOperationReducer<TRes = unknown, TArgs = unknown[], TErr = Error>(
-    operationId: OperationId<TRes, TArgs, TErr>,
+export function createOperationReducer<TRes = unknown, TArgs = unknown[]>(
+    operationId: OperationId<TRes, TArgs>,
     actionNames: AsyncOperationActionNames,
-): Reducer<AsyncOperations | undefined> {
-    return (state: AsyncOperations | undefined, action: AsyncOperationAction) => {
-        const nextState: AsyncOperations = state ? state : {};
+): Reducer<AppState | undefined, AsyncOperationAction> {
+    return (state: AppState | undefined, action: AsyncOperationAction) => {
+        const asyncOperationsState = (state && state[ASYNC_OPERATIONS_STATE_FIELD]) || {};
         
         switch (action.type) {
             case actionNames.initialize: {
                 return {
-                    ...nextState,
-                    [operationId]: getDefaultOperation(operationId),
+                    ...state,
+                    [ASYNC_OPERATIONS_STATE_FIELD]: {
+                        ...asyncOperationsState,
+                        [operationId]: buildDefaultOperation(operationId),
+                    },
                 };
             }
+            
             case actionNames.executionStarted: {
                 const startAction = action as AsyncOperationExecutionStartedAction<TArgs>;
                 const operation = state && state[operationId]
                     ? state[operationId]
-                    : getDefaultOperation(operationId);
+                    : buildDefaultOperation(operationId);
                 const updatedOperation = {
                     ...operation,
                     isLoading: true,
                     args: startAction.payload.args
-                } as AsyncOperation<TRes, TArgs, TErr>;
+                } as AsyncOperation<TRes, TArgs>;
                 
                 return {
-                    ...nextState,
-                    [operationId]: updatedOperation,
+                    ...state,
+                    [ASYNC_OPERATIONS_STATE_FIELD]: {
+                        ...asyncOperationsState,
+                        [operationId]: updatedOperation,
+                    },
                 };
             }
+            
             case actionNames.executionSucceeded: {
                 const successAction = action as AsyncOperationExecutionSuccededAction<TRes>;
                 const operation = state && state[operationId]
                     ? state[operationId]
-                    : getDefaultOperation(operationId);
+                    : buildDefaultOperation(operationId);
                 const updatedOperation = {
                     ...operation,
                     isLoading: false,
                     result: successAction.payload.result,
-                } as AsyncOperation<TRes, TArgs, TErr>;
+                } as AsyncOperation<TRes, TArgs>;
                 
                 return {
-                    ...nextState,
-                    [operationId]: updatedOperation,
+                    ...state,
+                    [ASYNC_OPERATIONS_STATE_FIELD]: {
+                        ...asyncOperationsState,
+                        [operationId]: updatedOperation,
+                    },
                 };
             }
+            
             case actionNames.executionFailed: {
-                const successAction = action as AsyncOperationExecutionFailedAction<TErr>
+                const successAction = action as AsyncOperationExecutionFailedAction;
                 const operation = state && state[operationId]
                     ? state[operationId]
-                    : getDefaultOperation(operationId);
+                    : buildDefaultOperation(operationId);
                 const updatedOperation = {
                     ...operation,
                     isLoading: false,
                     error: successAction.payload.error,
-                } as AsyncOperation<TRes, TArgs, TErr>;
+                } as AsyncOperation<TRes, TArgs>;
                 
                 return {
-                    ...nextState,
-                    [operationId]: updatedOperation,
+                    ...state,
+                    [ASYNC_OPERATIONS_STATE_FIELD]: {
+                        ...asyncOperationsState,
+                        [operationId]: updatedOperation,
+                    },
                 };
             }
             default: {
-                return nextState;
+                return state;
             }
         }
     };

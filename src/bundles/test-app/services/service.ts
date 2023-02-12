@@ -9,9 +9,18 @@ const api = {
 };
 
 class Service {
-    public async getValue(arg: {argType: string}) {
+    public static async getValue(arg: {argType: string}) {
+        console.log(123);
         return await api.getValue();
     }
 }
 
+class AnotherService {
+    public static async getValue(arg: {argType: string}) {
+        return await Service.getValue(arg);
+    }
+}
+
 export const service = createService(Service);
+
+export const anotherService = createService(AnotherService);

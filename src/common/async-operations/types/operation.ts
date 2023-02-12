@@ -1,11 +1,16 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type OperationId<TRes = unknown, TArgs = unknown[], TErr = Error> = string;
+declare class OperationIdMetaClass<TRes = unknown, TArgs = unknown[]> {
+    private result: TRes;
+    private args: TArgs;
+    private error: Error;
+}
 
-export type AsyncOperation<TRes = unknown, TArgs = unknown[], TErr = Error> = {
-    id: OperationId<TRes, TArgs, TErr>;
+export type OperationId<TRes = unknown, TArgs = unknown[]> = string & OperationIdMetaClass<TRes, TArgs>;
+
+export type AsyncOperation<TRes = unknown, TArgs = unknown[]> = {
+    id: OperationId<TRes, TArgs>;
     isLoading?: boolean;
     isError?: boolean;
-    error?: TErr;
+    error?: Error;
     args?: TArgs;
     result?: TRes;
 };

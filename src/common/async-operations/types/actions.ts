@@ -1,26 +1,30 @@
-export type AsyncOperationAction = {
-    type: string,
-};
+import { Action } from '@reduxjs/toolkit';
 
-export type AsyncOperationInitializeAction = AsyncOperationAction;
+export type AsyncOperationInitializeAction = Action<string>;
 
-export type AsyncOperationExecutionStartedAction<TArgs> = AsyncOperationAction & {
+export type AsyncOperationExecutionStartedAction<TArgs> = Action<string> & {
     payload: {
         args: TArgs;
     },
 };
 
-export type AsyncOperationExecutionSuccededAction<TRes> = AsyncOperationAction & {
+export type AsyncOperationExecutionSuccededAction<TRes> = Action<string> & {
     payload: {
         result: TRes;
     },    
 };
 
-export type AsyncOperationExecutionFailedAction<TErr> = AsyncOperationAction & {
+export type AsyncOperationExecutionFailedAction = Action<string> & {
     payload: {
-        error: TErr;
+        error: Error;
     },  
 };
+
+export type AsyncOperationAction<TRes = unknown, TArgs = unknown[]> =
+    | AsyncOperationInitializeAction
+    | AsyncOperationExecutionStartedAction<TArgs>
+    | AsyncOperationExecutionSuccededAction<TRes>
+    | AsyncOperationExecutionFailedAction;
 
 export type AsyncOperationActionNames = {
     initialize: string,
@@ -28,8 +32,3 @@ export type AsyncOperationActionNames = {
     executionSucceeded: string,
     executionFailed: string,
 };
-
-export type BuiltAsyncOperationActionNames = {
-    operationId: string,
-    actionNames: AsyncOperationActionNames,
-}

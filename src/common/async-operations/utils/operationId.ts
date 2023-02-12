@@ -1,16 +1,9 @@
-export function buildOperationId(serviceName: string, propertyName: string) {
-    return `${serviceName}%%${propertyName}`;
-}
+import {
+    ClassType,
+    ServiceField,
+    ServiceFieldOperationId
+} from '../types';
 
-export function parseOperationId(operationId: string) {
-    const parts = operationId.split('%%');
-    
-    if (parts.length < 2) {
-        throw new Error('Invalid operation id passed to parseOperationId');
-    }
-    
-    return {
-        serviceName: parts[0],
-        propertyName: parts[1],
-    };
+export function buildOperationId<T extends ClassType, F extends ServiceField<T>>(Service: T, propertyName: F) {
+    return `${Service.name}%%${propertyName}` as ServiceFieldOperationId<T, F>;
 }

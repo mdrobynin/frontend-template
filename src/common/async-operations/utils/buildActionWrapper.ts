@@ -1,70 +1,52 @@
-import { AsyncOperationActionNames } from '../types';
-import { INTERNAL_REF } from '../internal/internalRef';
+import { Dispatch } from '@reduxjs/toolkit';
 
-export function buildActionWrapper(instance: any, propertyName: string, actionNames:  AsyncOperationActionNames) {
-    return (...args: any[]) => {
-        if (INTERNAL_REF.store) {
-            INTERNAL_REF.store.dispatch({ type: actionNames.initialize });
+import { AsyncOperationActionNames, ClassType, ServiceField, ServiceFieldAction, ArgsType } from '../types';
+
+export function buildActionWrapper<T extends ClassType, F extends ServiceField<T>>(
+    Service: T,
+    propertyName: F,
+    actionNames: AsyncOperationActionNames,
+    dispatch: Dispatch
+) {
+    return (...args: ArgsType<T, F>) => {
+        const originalMethod = Service[propertyName] as ServiceFieldAction<T, F>;
+        
+        try {
+            dispatch({
+                type: actionNames.executionStarted,
+                payload: { args },
+            });
             
-            const originalMethod = instance[propertyName] as (...args: any[]) => any;
+            const methodResult = originalMethod(...args);
             
-            try {
-                const methodResult = originalMethod(...args);
+            if (methodResult.then) {
+                const resultPromise = methodResult as Promise<any>;
                 
-                INTERNAL_REF.store.dispatch({
-                    type: actionNames.executionStarted,
-                    payload: {
-                        args,
-                    },
-                });
-                
-                if (methodResult.then) {
-                    const resultPromise = methodResult as Promise<any>;
-                    
-                    resultPromise.then(
-                        result => {
-                            if (INTERNAL_REF.store) {
-                                INTERNAL_REF.store.dispatch({
-                                    type: actionNames.executionSucceeded,
-                                    payload: {
-                                        result,
-                                    },
-                                });
-                            } else {
-                                throw new Error('Unpredicted internal error');
-                            }
-                        },
-                        error => {
-                            if (INTERNAL_REF.store) {
-                                INTERNAL_REF.store.dispatch({
-                                    type: actionNames.executionFailed,
-                                    payload: {
-                                        error,
-                                    },
-                                });
-                            } else {
-                                throw new Error('Unpredicted internal error');
-                            }
-                        }
-                    );
-                } else {
-                    INTERNAL_REF.store.dispatch({
+                resultPromise.then(
+                    result => dispatch({
                         type: actionNames.executionSucceeded,
-                        payload: {
-                            result: methodResult,
-                        },
-                    });
-                }
-            } catch (error) {
-                INTERNAL_REF.store.dispatch({
-                    type: actionNames.executionFailed,
-                    payload: {
-                        error,
-                    },
+                        payload: { result },
+                    }),
+                    error => dispatch({
+                        type: actionNames.executionFailed,
+                        payload: { error },
+                    })
+                );
+            } else {
+                dispatch({
+                    type: actionNames.executionSucceeded,
+                    payload: { result: methodResult },
                 });
             }
-        } else {
-            throw new Error('asyncOperationsEnchancer was not used');
+            
+            return methodResult;
+        } catch (error) {
+            dispatch({
+                type: actionNames.executionFailed,
+                payload: { error },
+            });
+            
+            throw error;
         }
     }
 };

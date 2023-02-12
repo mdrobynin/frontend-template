@@ -418,6 +418,9 @@ module.exports = function (webpackEnv) {
                       runtime: hasJsxRuntime ? 'automatic' : 'classic',
                     },
                   ],
+                  [
+                    require.resolve('@babel/preset-typescript'),
+                  ]
                 ],
                 
                 plugins: [

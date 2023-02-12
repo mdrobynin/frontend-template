@@ -1,29 +1,44 @@
 import { createOperationReducer } from './createOperationReducer';
 import { buildActionNames } from './buildActionNames';
 import { buildActionWrapper } from './buildActionWrapper';
-import { INTERNAL_REF } from '../internal/internalRef';
+import { buildOperationId } from './operationId';
+import { INTERNAL_REF } from '../internal';
+import { ServiceField, ClassType, ServiceOperations, ServiceActions } from '../types';
 
-export function createService<T>(Service: { new(): T, name: string }) {
-    console.log('createService')
-    const instance = new Service();
-    const prototype = Object.getPrototypeOf(instance);
-    const allPropertyNames = Object.getOwnPropertyNames(prototype);
-    const propertyNames = allPropertyNames
-        .filter(name => name !== 'constructor')
-        .filter(name => typeof prototype[name] === 'function');
+function getServiceMethodNames<T extends ClassType>(Service: T): ServiceField<T>[] {
+    const serviceFields = Object.getOwnPropertyNames(Service) as ServiceField<T>[];
+    
+    return serviceFields.filter(name => name !== 'constructor' && typeof Service[name] === 'function');
+}
 
-    const serviceActions: any = {};
+export function createService<T extends ClassType>(Service: T) {
+    const serviceActions: ServiceActions<T> = {};
+    const operations: ServiceOperations<T> = {};
 
-    propertyNames.forEach(propertyName => {
-        const { operationId, actionNames } = buildActionNames(Service.name, propertyName);
-        const reducer = createOperationReducer(operationId, actionNames);
+    getServiceMethodNames(Service)
+        .forEach(methodName => {
+            if (!INTERNAL_REF.store) {
+                throw new Error('asyncOperationsEnchancer was not used');
+            }
+            
+            const operationId = buildOperationId(Service, methodName);
+            const actionNames = buildActionNames(Service.name, methodName);
+            const reducer = createOperationReducer(operationId, actionNames);
 
-        INTERNAL_REF.updateReducer(reducer);
+            INTERNAL_REF.updateReducer(reducer);
+            INTERNAL_REF.store.dispatch({ type: actionNames.initialize });
 
-        serviceActions[propertyName] = buildActionWrapper(instance, propertyName, actionNames);
-    });
+            serviceActions[methodName] = buildActionWrapper(
+                Service,
+                methodName,
+                actionNames,
+                INTERNAL_REF.store.dispatch
+            );
+            operations[methodName] = operationId;
+        });
 
     return {
         actions: serviceActions as T,
+        operations
     };
 }

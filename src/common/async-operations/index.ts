@@ -1,3 +1,4 @@
-export * from './types';
-export * from './utils';
-export * from './asyncOperationsEnchancer';
+export type { AsyncOperation, OperationId } from './types';
+export { createService } from './utils';
+export { asyncOperationsEnchancer } from './asyncOperationsEnchancer';
+export { useOperation } from './hooks';
