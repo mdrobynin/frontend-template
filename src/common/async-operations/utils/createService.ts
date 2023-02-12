@@ -26,7 +26,6 @@ export function createService<T extends ClassType>(Service: T) {
             const reducer = createOperationReducer(operationId, actionNames);
 
             INTERNAL_REF.updateReducer(reducer);
-            INTERNAL_REF.store.dispatch({ type: actionNames.initialize });
 
             serviceActions[methodName] = buildActionWrapper(
                 Service,

@@ -40,7 +40,6 @@ export function buildActionNames(
     const baseName = createActionBaseName(serviceName, propertyName);
     
     return {
-        initialize: `${baseName}_INITIALIZE`,
         executionStarted: `${baseName}_EXECUTION_STARTED`,
         executionSucceeded: `${baseName}_EXECUTION_SUCCEEDED`,
         executionFailed: `${baseName}_EXECUTION_FAILED`,

@@ -1,7 +1,5 @@
 import { Action } from '@reduxjs/toolkit';
 
-export type AsyncOperationInitializeAction = Action<string>;
-
 export type AsyncOperationExecutionStartedAction<TArgs> = Action<string> & {
     payload: {
         args: TArgs;
@@ -21,13 +19,12 @@ export type AsyncOperationExecutionFailedAction = Action<string> & {
 };
 
 export type AsyncOperationAction<TRes = unknown, TArgs = unknown[]> =
-    | AsyncOperationInitializeAction
+    | Action<string>
     | AsyncOperationExecutionStartedAction<TArgs>
     | AsyncOperationExecutionSuccededAction<TRes>
     | AsyncOperationExecutionFailedAction;
 
 export type AsyncOperationActionNames = {
-    initialize: string,
     executionStarted: string,
     executionSucceeded: string,
     executionFailed: string,

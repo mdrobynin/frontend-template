@@ -19,18 +19,9 @@ export function createOperationReducer<TRes = unknown, TArgs = unknown[]>(
 ): Reducer<AppState | undefined, AsyncOperationAction> {
     return (state: AppState | undefined, action: AsyncOperationAction) => {
         const asyncOperationsState = (state && state[ASYNC_OPERATIONS_STATE_FIELD]) || {};
+        const actionType = action ? action.type : '';
         
-        switch (action.type) {
-            case actionNames.initialize: {
-                return {
-                    ...state,
-                    [ASYNC_OPERATIONS_STATE_FIELD]: {
-                        ...asyncOperationsState,
-                        [operationId]: buildDefaultOperation(operationId),
-                    },
-                };
-            }
-            
+        switch (actionType) {
             case actionNames.executionStarted: {
                 const startAction = action as AsyncOperationExecutionStartedAction<TArgs>;
                 const operation = state && state[operationId]
